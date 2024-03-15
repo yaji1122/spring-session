@@ -8,19 +8,18 @@ import org.springframework.data.redis.connection.RedisNode
 import org.springframework.data.redis.connection.RedisSentinelConfiguration
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory
 import org.springframework.data.redis.core.RedisTemplate
-import org.springframework.session.web.http.CookieHttpSessionStrategy
-import org.springframework.session.web.http.HeaderHttpSessionStrategy
-import redis.clients.jedis.JedisShardInfo
+import org.springframework.session.web.http.DefaultCookieSerializer
+import redis.clients.jedis.JedisPoolConfig
 import utils.SpringSessionUtils
 
 @Slf4j
 class SpringSessionGrailsPlugin extends Plugin {
 
-    def version = "2.0.1-ub"
-    def grailsVersion = "3.3.0 > *"
+    def version = "5.3.5"
+    def grailsVersion = "5.3.5 > *"
     def title = "Spring Session Grails Plugin"
-    def author = "Jitendra Singh"
-    def authorEmail = "jeet.mp3@gmail.com"
+    def author = "Jitendra Singh | Modified by Yaji Lin"
+    def authorEmail = "jeet.mp3@gmail.com;yajilin@fontrip.com"
     def description = 'Provides support for SpringSession project'
     def documentation = "https://github.com/jeetmp3/spring-session"
     def license = "APACHE"
@@ -30,7 +29,7 @@ class SpringSessionGrailsPlugin extends Plugin {
     def profiles = ['web']
 
     Closure doWithSpring() {
-        { ->
+        def beans = {
             log.info 'Configuring Spring session'
             SpringSessionUtils.application = grailsApplication
             ConfigObject conf = SpringSessionUtils.sessionConfig
@@ -67,16 +66,25 @@ class SpringSessionGrailsPlugin extends Plugin {
                     hostName = conf.redis.connectionFactory.hostName ?: "localhost"
                     port = conf.redis.connectionFactory.port ?: 6379
                     timeout = conf.redis.connectionFactory.timeout ?: 2000
-                    usePool = conf.redis.connectionFactory.usePool
-                    database = conf.redis.connectionFactory.dbIndex
+                    usePool = conf.redis.connectionFactory.usePool ?: false
+                    database = conf.redis.connectionFactory.dbIndex ?:0
                     if (conf.redis.connectionFactory.password) {
                         password = conf.redis.connectionFactory.password
+                    }
+                    log.info("Redis Setting timeout: " + timeout)
+                    if (usePool) {
+                        poolConfig = new JedisPoolConfig()
+                        poolConfig.maxTotal = conf.redis.connectionFactory.pool.maxTotal
+                        poolConfig.maxIdle = conf.redis.connectionFactory.pool.maxIdle
+                        poolConfig.minIdle = conf.redis.connectionFactory.pool.minIdle
+                        log.info("Redis Pool Setting: maxTotal: " + poolConfig.maxTotal + ", maxIdle: " + poolConfig.maxIdle + ", minIdle: " + poolConfig.minIdle)
                     }
                     convertPipelineAndTxResults = conf.redis.connectionFactory.convertPipelineAndTxResults
                 }
             }
 
-            sessionRedisTemplate(RedisTemplate) { bean ->
+
+            redisTemplate(RedisTemplate) { bean ->
                 keySerializer = ref("stringRedisSerializer")
                 hashKeySerializer = ref("stringRedisSerializer")
                 connectionFactory = ref("redisConnectionFactory")
@@ -84,16 +92,18 @@ class SpringSessionGrailsPlugin extends Plugin {
                 bean.initMethod = "afterPropertiesSet"
             }
 
+            cookieSerializer(DefaultCookieSerializer) {
+                cookieName = conf.strategy.cookie.name
+            }
+
             String defaultStrategy = conf.strategy.defaultStrategy
             if (defaultStrategy == "HEADER") {
-                httpSessionStrategy(HeaderHttpSessionStrategy) {
+                httpSessionIdResolver(HeaderHttpSessionIdResolver) {
                     headerName = conf.strategy.httpHeader.headerName
                 }
             } else {
-                httpSessionStrategy(CookieHttpSessionStrategy) {
-                    cookieSerializer {
-                        cookieName = conf.strategy.cookie.name
-                    }
+                httpSessionIdResolver(CookieHttpSessionIdResolver) {
+                    cookieSerializer = ref("cookieSerializer")
                 }
             }
 
@@ -102,7 +112,9 @@ class SpringSessionGrailsPlugin extends Plugin {
                 persistMutable = conf.allow.persist.mutable as Boolean
             }
 
+
             log.info 'Finished Spring Session configuration'
         }
+        return beans
     }
 }

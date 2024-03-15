@@ -20,7 +20,7 @@ import java.util.Enumeration;
 public class HttpSessionSynchronizer extends OncePerRequestFilter {
 
     private Boolean persistMutable;
-
+    public HttpSessionSynchronizer() {}
 
     @Override
     public void afterPropertiesSet() throws ServletException {
@@ -31,7 +31,7 @@ public class HttpSessionSynchronizer extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         filterChain.doFilter(request, response);
-        if (persistMutable && request != null && request.getSession(false) != null) {
+        if (persistMutable && request.getSession(false) != null) {
             HttpSession session = request.getSession();
             Enumeration<String> attributeNames = session.getAttributeNames();
             while (attributeNames.hasMoreElements()) {
@@ -39,8 +39,7 @@ public class HttpSessionSynchronizer extends OncePerRequestFilter {
                 try {
                     Object object = session.getAttribute(key);
                     session.setAttribute(key, object);
-                } catch (Exception ignored) {
-                }
+                } catch (Exception ignored) {}
             }
         }
     }

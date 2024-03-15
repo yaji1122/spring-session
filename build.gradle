@@ -1,102 +1,76 @@
 buildscript {
     repositories {
         mavenLocal()
-        maven { url "https://repo.grails.org/grails/core" }
+        //2021-06-07 更換 repo
+        maven { url "https://repo.grails.org/artifactory/core" }
     }
     dependencies {
-        classpath "org.grails:grails-gradle-plugin:$grailsVersion"
+        classpath "org.grails:grails-gradle-plugin:$grailsGradlePluginVersion"
+        classpath "com.bertramlabs.plugins:asset-pipeline-gradle:3.4.7"
     }
 }
 
-version "2.0.1"
+version "5.3.5"
 group "org.grails.plugins"
 
 apply plugin:"eclipse"
 apply plugin:"idea"
 apply plugin:"org.grails.grails-plugin"
-apply plugin:"org.grails.grails-plugin-publish"
+apply plugin:"com.bertramlabs.asset-pipeline"
+apply plugin:"maven-publish"
 
 repositories {
     mavenLocal()
-    maven { url "https://repo.grails.org/grails/repo" }
-    maven { url "https://repo.grails.org/grails/core" }
+    maven { url "https://repo.grails.org/artifactory/core" }
+    maven { url "https://repo.grails.org/artifactory/plugins" }
 }
 
-dependencyManagement {
-    imports {
-        mavenBom "org.grails:grails-bom:$grailsVersion"
+configurations {
+    developmentOnly
+    runtimeClasspath {
+        extendsFrom developmentOnly
     }
-    applyMavenExclusions false
 }
 
 dependencies {
-    compile "org.springframework.boot:spring-boot-starter-logging"
-    compile "org.springframework.boot:spring-boot-autoconfigure"
-    compile "org.springframework.boot:spring-boot-starter-tomcat"
-
-    compile "org.grails:grails-core"
-    compile "org.grails:grails-dependencies"
-    compile "org.grails:grails-web-boot"
-
+    developmentOnly("org.springframework.boot:spring-boot-devtools")
+    compileOnly "io.micronaut:micronaut-inject-groovy"
     console "org.grails:grails-console"
+    implementation "io.lettuce:lettuce-core"
+    implementation "org.springframework.boot:spring-boot-starter-logging"
+    implementation "org.springframework.boot:spring-boot-autoconfigure"
+    implementation "org.springframework.boot:spring-boot-starter-tomcat"
 
-    testCompile "org.grails:grails-plugin-testing"
-    testCompile "org.grails.plugins:geb"
-    testCompile "org.grails:grails-web-testing-support:1.1.2"
+    implementation "org.grails:grails-core"
+    implementation "org.grails:grails-dependencies"
+    implementation "org.grails:grails-web-boot"
 
-    testRuntime 'org.seleniumhq.selenium:selenium-chrome-driver:2.44.0'
 
-    compile "org.springframework.session:spring-session:1.3.1.RELEASE"
-    compile "org.springframework.data:spring-data-redis:1.7.4.RELEASE"
+    // https://mvnrepository.com/artifact/org.springframework.session/spring-session-core
+    implementation 'org.springframework.session:spring-session-core:2.7.0'
+    implementation 'org.springframework.session:spring-session-data-redis:2.7.0'
 
-    compile "redis.clients:jedis:2.9.0"
+    implementation "redis.clients:jedis:5.1.0"
+
+    //  ====== Test Relate Implementations ======
+    testImplementation "io.micronaut:micronaut-inject-groovy"
 }
 
-task wrapper(type: Wrapper) {
-    gradleVersion = gradleWrapperVersion
+bootRun {
+    jvmArgs('-Dspring.output.ansi.enabled=always')
+    sourceResources sourceSets.main
+    String springProfilesActive = 'spring.profiles.active'
+    systemProperty springProfilesActive, System.getProperty(springProfilesActive)
 }
 
-grailsPublish {
-    // TODO: Provide values here
-    githubSlug = 'jeetmp3/spring-session'
-    license {
-        name = 'Apache-2.0'
-    }
-    title = "Spring Session Grails Plugin"
-    desc = "Provides support for SpringSession project"
-    developers = [jeetmp3:"Jitendra Singh"]
-    portalUser = ""
-    portalPassword = ""
-}
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'org.grails.plugins'
+            artifactId = 'spring-session'
+            version = '5.3.5'
 
-bintray {
-    pkg {
-        name = "$project.name"
-        issueTrackerUrl = "https://github.com/jeetmp3/$project.name/issues"
-        vcsUrl = "https://github.com/jeetmp3/$project.name"
-        version {
-            attributes = ['grails-plugin': "$project.group:$project.name"]
-            name = project.version
+            from components.java
         }
-    }
-}
-
-test {
-    testLogging {
-        events 'started', 'passed'
-    }
-}
-
-test {
-    jvmArgs '-Xverify:none'
-}
-
-integrationTest {
-    jvmArgs '-Xverify:none'
-}
-
-integrationTest {
-    testLogging {
-        events 'started', 'passed'
     }
 }

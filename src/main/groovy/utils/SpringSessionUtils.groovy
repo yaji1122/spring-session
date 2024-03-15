@@ -15,7 +15,9 @@ class SpringSessionUtils {
 
     static ConfigObject getSessionConfig() {
         if(isEmpty(config)) {
-            loadConfig((application.config.springsession ?: new ConfigObject()) as ConfigObject)
+            println "Load Config...."
+            ConfigObject config = application.config.getProperty('springsession', Map)
+            loadConfig(config ?: new ConfigObject())
         }
         return (config)
     }
