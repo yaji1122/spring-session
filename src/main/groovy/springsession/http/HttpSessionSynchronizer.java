@@ -1,4 +1,4 @@
-package org.grails.plugins.springsession.web.http;
+package springsession.http;
 
 import org.springframework.core.annotation.Order;
 import org.springframework.session.web.http.SessionRepositoryFilter;
@@ -20,7 +20,6 @@ import java.util.Enumeration;
 public class HttpSessionSynchronizer extends OncePerRequestFilter {
 
     private Boolean persistMutable;
-
 
     @Override
     public void afterPropertiesSet() throws ServletException {

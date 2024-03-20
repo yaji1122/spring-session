@@ -1,4 +1,4 @@
-package org.grails.plugins.springsession.converters;
+package springsession.converters;
 
 import grails.core.GrailsApplication;
 import org.springframework.core.convert.converter.Converter;

@@ -1,4 +1,4 @@
-package org.grails.plugins.springsession.data.redis.config;
+package springsession.config;
 
 import org.springframework.data.redis.connection.NamedNode;
 

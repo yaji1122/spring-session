@@ -1,22 +1,25 @@
 import grails.plugins.Plugin
 import groovy.util.logging.Slf4j
-import org.grails.plugins.springsession.config.SpringSessionConfig
-import org.grails.plugins.springsession.data.redis.config.MasterNamedNode
-import org.grails.plugins.springsession.data.redis.config.NoOpConfigureRedisAction
-import org.grails.plugins.springsession.web.http.HttpSessionSynchronizer
+import org.springframework.session.data.redis.config.annotation.web.http.RedisHttpSessionConfiguration
+import springsession.config.SpringSessionConfig
+import springsession.config.MasterNamedNode
+import springsession.config.NoOpConfigureRedisAction
+import springsession.http.HttpSessionSynchronizer
 import org.springframework.data.redis.connection.RedisNode
 import org.springframework.data.redis.connection.RedisSentinelConfiguration
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory
 import org.springframework.data.redis.core.RedisTemplate
+import org.springframework.session.data.redis.RedisOperationsSessionRepository
 import org.springframework.session.web.http.CookieHttpSessionStrategy
 import org.springframework.session.web.http.HeaderHttpSessionStrategy
+import redis.clients.jedis.JedisPoolConfig
 import redis.clients.jedis.JedisShardInfo
 import utils.SpringSessionUtils
 
 @Slf4j
 class SpringSessionGrailsPlugin extends Plugin {
 
-    def version = "2.0.1-ub"
+    def version = "3.3.10"
     def grailsVersion = "3.3.0 > *"
     def title = "Spring Session Grails Plugin"
     def author = "Jitendra Singh"
@@ -30,7 +33,7 @@ class SpringSessionGrailsPlugin extends Plugin {
     def profiles = ['web']
 
     Closure doWithSpring() {
-        { ->
+        def beans = { ->
             log.info 'Configuring Spring session'
             SpringSessionUtils.application = grailsApplication
             ConfigObject conf = SpringSessionUtils.sessionConfig
@@ -67,10 +70,18 @@ class SpringSessionGrailsPlugin extends Plugin {
                     hostName = conf.redis.connectionFactory.hostName ?: "localhost"
                     port = conf.redis.connectionFactory.port ?: 6379
                     timeout = conf.redis.connectionFactory.timeout ?: 2000
-                    usePool = conf.redis.connectionFactory.usePool
-                    database = conf.redis.connectionFactory.dbIndex
+                    usePool = conf.redis.connectionFactory.usePool ?: false
+                    database = conf.redis.connectionFactory.dbIndex ?:0
                     if (conf.redis.connectionFactory.password) {
                         password = conf.redis.connectionFactory.password
+                    }
+                    log.info("Redis Setting timeout: " + timeout)
+                    if (usePool) {
+                        poolConfig = new JedisPoolConfig()
+                        poolConfig.maxTotal = conf.redis.poolConfig.maxTotal
+                        poolConfig.maxIdle = conf.redis.poolConfig.maxIdle
+                        poolConfig.minIdle = conf.redis.poolConfig.minIdle
+                        log.info("Redis Pool Setting: maxTotal: " + poolConfig.maxTotal + ", maxIdle: " + poolConfig.maxIdle + ", minIdle: " + poolConfig.minIdle)
                     }
                     convertPipelineAndTxResults = conf.redis.connectionFactory.convertPipelineAndTxResults
                 }
@@ -82,6 +93,10 @@ class SpringSessionGrailsPlugin extends Plugin {
                 connectionFactory = ref("redisConnectionFactory")
                 defaultSerializer = ref("jdkSerializationRedisSerializer")
                 bean.initMethod = "afterPropertiesSet"
+            }
+
+            redisHttpSessionConfiguration(RedisHttpSessionConfiguration) {
+                maxInactiveIntervalInSeconds = conf.maxInactiveInterval
             }
 
             String defaultStrategy = conf.strategy.defaultStrategy
@@ -98,6 +113,8 @@ class SpringSessionGrailsPlugin extends Plugin {
             }
 
             configureRedisAction(NoOpConfigureRedisAction)
+
+            // HttpSessionSynchronizer
             httpSessionSynchronizer(HttpSessionSynchronizer) {
                 persistMutable = conf.allow.persist.mutable as Boolean
             }
