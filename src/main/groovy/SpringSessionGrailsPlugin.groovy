@@ -8,14 +8,17 @@ import org.springframework.data.redis.connection.RedisNode
 import org.springframework.data.redis.connection.RedisSentinelConfiguration
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory
 import org.springframework.data.redis.core.RedisTemplate
+import org.springframework.session.data.redis.config.annotation.web.http.RedisHttpSessionConfiguration
+import org.springframework.session.web.http.CookieHttpSessionIdResolver
 import org.springframework.session.web.http.DefaultCookieSerializer
+import org.springframework.session.web.http.HeaderHttpSessionIdResolver
 import redis.clients.jedis.JedisPoolConfig
 import utils.SpringSessionUtils
 
 @Slf4j
 class SpringSessionGrailsPlugin extends Plugin {
 
-    def version = "5.3.5"
+    def version = "5.3.6"
     def grailsVersion = "5.3.5 > *"
     def title = "Spring Session Grails Plugin"
     def author = "Jitendra Singh | Modified by Yaji Lin"
@@ -90,6 +93,10 @@ class SpringSessionGrailsPlugin extends Plugin {
                 connectionFactory = ref("redisConnectionFactory")
                 defaultSerializer = ref("jdkSerializationRedisSerializer")
                 bean.initMethod = "afterPropertiesSet"
+            }
+
+            redisHttpSessionConfiguration(RedisHttpSessionConfiguration) {
+                maxInactiveIntervalInSeconds = conf.maxInactiveInterval
             }
 
             cookieSerializer(DefaultCookieSerializer) {
