@@ -50,7 +50,7 @@ dependencies {
     implementation 'org.springframework.session:spring-session-core:2.7.0'
     implementation 'org.springframework.session:spring-session-data-redis:2.7.0'
 
-    implementation "redis.clients:jedis:5.1.0"
+    implementation "redis.clients:jedis:3.9.0"
 
     //  ====== Test Relate Implementations ======
     testImplementation "io.micronaut:micronaut-inject-groovy"
