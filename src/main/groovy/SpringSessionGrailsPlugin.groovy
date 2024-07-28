@@ -10,14 +10,11 @@ import org.springframework.data.redis.connection.RedisNode
 import org.springframework.data.redis.connection.RedisSentinelConfiguration
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory
 import org.springframework.data.redis.core.RedisTemplate
-import org.springframework.session.data.redis.RedisIndexedSessionRepository
 import org.springframework.session.web.http.CookieHttpSessionIdResolver
 import org.springframework.session.web.http.DefaultCookieSerializer
 import org.springframework.session.web.http.HeaderHttpSessionIdResolver
 import redis.clients.jedis.JedisPoolConfig
-import redis.clients.jedis.args.FlushMode
 import utils.SpringSessionUtils
-import org.springframework.security.web.session.HttpSessionEventPublisher
 import org.springframework.session.data.redis.config.annotation.web.http.RedisHttpSessionConfiguration;
 @Slf4j
 class SpringSessionGrailsPlugin extends Plugin {
