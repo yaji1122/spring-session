@@ -102,11 +102,16 @@ class SpringSessionGrailsPlugin extends Plugin {
                 bean.initMethod = "afterPropertiesSet"
             }
 
+            log.info("cookie setting: ${conf.strategy.cookie}")
+
+            def secure = conf.strategy.cookie.secure != null ? conf.strategy.cookie.secure : true
+            def httpOnly = conf.strategy.cookie.httpOnly != null ? conf.strategy.cookie.httpOnly : true
+
             cookieSerializer(DefaultCookieSerializer) {
                 cookieName = conf.strategy.cookie.name ?: 'SESSION'
                 sameSite = conf.strategy.cookie.sameSite ?: 'Lax'
-                useSecureCookie = conf.strategy.cookie.secure ?: true
-                useHttpOnlyCookie = conf.strategy.cookie.httpOnly ?: true
+                useSecureCookie = secure
+                useHttpOnlyCookie = httpOnly
             }
 
             String defaultStrategy = conf.strategy.defaultStrategy
