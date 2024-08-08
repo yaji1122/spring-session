@@ -19,7 +19,7 @@ import org.springframework.session.data.redis.config.annotation.web.http.RedisHt
 @Slf4j
 class SpringSessionGrailsPlugin extends Plugin {
 
-    def version = "5.3.6"
+    def version = "5.3.7"
     def grailsVersion = "5.3.5 > *"
     def title = "Spring Session Grails Plugin"
     def author = "Jitendra Singh | Modified by Yaji Lin"
@@ -103,7 +103,10 @@ class SpringSessionGrailsPlugin extends Plugin {
             }
 
             cookieSerializer(DefaultCookieSerializer) {
-                cookieName = conf.strategy.cookie.name
+                cookieName = conf.strategy.cookie.name ?: 'SESSION'
+                sameSite = conf.strategy.cookie.sameSite ?: 'Lax'
+                useSecureCookie = conf.strategy.cookie.secure ?: true
+                useHttpOnlyCookie = conf.strategy.cookie.httpOnly ?: true
             }
 
             String defaultStrategy = conf.strategy.defaultStrategy

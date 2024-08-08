@@ -10,7 +10,7 @@ buildscript {
     }
 }
 
-version "5.3.6"
+version "5.3.7"
 group "org.grails.plugins"
 
 apply plugin:"eclipse"
@@ -68,7 +68,7 @@ publishing {
         maven(MavenPublication) {
             groupId = 'org.grails.plugins'
             artifactId = 'spring-session'
-            version = '5.3.6'
+            version = '5.3.7'
 
             from components.java
         }
